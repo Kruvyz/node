@@ -1,38 +1,63 @@
 const express = require('express');
 const listRouter = new express.Router();
-const { getLists, getList, addList, getTasksInList, updateList, deleteList } = require('../data');
+const { 
+  getAllElementsInColection,
+  getElementsInColectionById,
+  addElementInColection,
+  updateElementInCollection,
+  deleteElementInCollection
+ } = require('../data');
 
 listRouter.get('/', (req, res) => {
-  res.send(getLists())
+  getAllElementsInColection('lists')
+    .then(response => res.send(response))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 listRouter.get('/:id', (req, res) => {
-  const id = +req.params.id;
-  res.send(getList(id));
-});
+  const id = req.params.id;
 
-listRouter.get('/:id/tasks', (req, res) => {
-  const id = +req.params.id;
-  res.send(getTasksInList(id));
+  getElementsInColectionById('lists', id)
+    .then(response => res.send(response))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 listRouter.put('/add', (req, res) => {
   const list = req.body.list;
-  addList(list);
-  res.sendStatus(200);
+  addElementInColection('lists', list)
+    .then(response => res.sendStatus(200))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 listRouter.post('/:id', (req, res) => {
-  const id = +req.params.id;
+  const id = req.params.id;
   const list = req.body.list;
-  updateList(id, list);
-  res.sendStatus(200);
+  
+  updateElementInCollection('lists', id, list)
+    .then(response => res.sendStatus(200))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 listRouter.delete('/:id', (req, res) => {
-  const id = +req.params.id;
-  deleteList(id);
-  res.sendStatus(200);
+  const id = req.params.id;
+  deleteElementInCollection('lists', id)
+    .then(response => res.sendStatus(200))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 module.exports = listRouter;

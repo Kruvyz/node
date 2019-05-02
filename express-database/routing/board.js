@@ -1,38 +1,63 @@
 const express = require('express');
 const boardRouter = new express.Router();
-const { getBoards, getBoard, addBoard, getListsInBoard, updateBoard, deleteBoard } = require('../data');
+const { 
+  getAllElementsInColection,
+  getElementsInColectionById,
+  addElementInColection,
+  updateElementInCollection,
+  deleteElementInCollection
+ } = require('../data');
 
 boardRouter.get('/', (req, res) => {
-  res.send(getBoards())
+  getAllElementsInColection('boards')
+    .then(response => res.send(response))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 boardRouter.get('/:id', (req, res) => {
-  const id = +req.params.id;
-  res.send(getBoard(id));
-});
+  const id = req.params.id;
 
-boardRouter.get('/:id/lists', (req, res) => {
-  const id = +req.params.id;
-  res.send(getListsInBoard(id));
+  getElementsInColectionById('boards', id)
+    .then(response => res.send(response))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 boardRouter.put('/add', (req, res) => {
   const board = req.body.board;
-  addBoard(board);
-  res.sendStatus(200);
+  addElementInColection('boards', board)
+    .then(response => res.sendStatus(200))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 boardRouter.post('/:id', (req, res) => {
-  const id = +req.params.id;
+  const id = req.params.id;
   const board = req.body.board;
-  updateBoard(id, board);
-  res.sendStatus(200);
+  
+  updateElementInCollection('boards', id, board)
+    .then(response => res.sendStatus(200))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 boardRouter.delete('/:id', (req, res) => {
-  const id = +req.params.id;
-  deleteBoard(id);
-  res.sendStatus(200);
+  const id = req.params.id;
+  deleteElementInCollection('boards', id)
+    .then(response => res.sendStatus(200))
+    .catch(error => {
+      console.error(error.message);
+      process.exit(1);
+    });
 });
 
 module.exports = boardRouter;

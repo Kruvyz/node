@@ -1,151 +1,98 @@
-let users = [
-  { id: 1, name: "user1", email: 'user1@gmail.com' },
-  { id: 2, name: "serh", email: 'serh@gmail.com' },
-  { id: 3, name: "andr", email: 'andr@gmail.com' }
-];
+const {MongoClient, ObjectId} = require("mongodb");
 
-let boards = [
-  { id: 1, title: 'board1' },
-  { id: 2, title: 'board2' }
-];
+const url = 'mongodb://localhost:27017';
+const databaseName = "node_test";
 
-let lists = [
-  { id: 1, title: 'list1', order: 1 },
-  { id: 2, title: 'list2', order: 1 },
-  { id: 3, title: 'list2', order: 2 }
-];
+async function getAllElementsInColection(collectionName) {
+  const client = await MongoClient.connect(url, {useNewUrlParser: true});
 
-let tasks = [
-  { id: 1, title: 'task1', order: 1, description: 'work with webpack', assignee: 2 },
-  { id: 2, title: 'task2', order: 2, description: 'start using react', assignee: 1 }
-];
+  const db = client.db(databaseName);
+  const collection = db.collection(collectionName);
 
-// -------- Users --------
+  const findAllData = await collection.find({}).toArray();
 
-function getUsers() {
-  return users;
+  await client.close();
+
+  return findAllData;
 }
 
-function getUser(id) {
-  return users.find(user => user.id === id);
+async function getElementsInColectionById(collectionName, id) {
+  const client = await MongoClient.connect(url, {useNewUrlParser: true});
+
+  const db = client.db(databaseName);
+  const collection = db.collection(collectionName);
+
+  const findData = await collection.findOne({_id: ObjectId(id)});
+
+  await client.close();
+
+  return findData;
 }
 
-function addUser(user) {
-  users.push(user);
+async function addElementInColection(collectionName, element) {
+  const client = await MongoClient.connect(url, {useNewUrlParser: true});
+
+  const db = client.db(databaseName);
+  const collection = db.collection(collectionName);
+
+  await collection.insertOne(element);
+
+  if (collectionName === 'lists') {
+    const boardCollection = db.collection('boards');
+    const list = await collection.findOne(element);
+    const board = await boardCollection.findOne({_id: ObjectId(list.order)});
+    let newBoardLists = [];
+
+    if (board.lists)
+      newBoardLists = [...board.lists, list._id];
+    else 
+      newBoardLists = [list._id];
+
+    await boardCollection.updateOne({_id: ObjectId(board._id)}, {$set: {lists: newBoardLists}});
+
+  } else if (collectionName === 'tasks') {
+    const listCollection = db.collection('lists');
+    const task = await collection.findOne(element);
+    const list = await listCollection.findOne({_id: ObjectId(task.order)});
+    let newListTasks = [];
+
+    if (list.tasks)
+      newListTasks = [...list.tasks, task._id];
+    else 
+      newListTasks = [task._id];
+
+    await listCollection.updateOne({_id: ObjectId(list._id)}, {$set: {tasks: newListTasks}});
+  }
+
+  await client.close();
 }
 
-function updateUser(id, user) {
-  const index = users.findIndex(elem => id === elem.id);
-  users = [...users.slice(0, index), user, ...users.slice(index + 1)];
+async function updateElementInCollection(collectionName, id, element) {
+  const client = await MongoClient.connect(url, {useNewUrlParser: true});
+
+  const db = client.db(databaseName);
+  const collection = db.collection(collectionName);
+
+  await collection.updateOne({_id: ObjectId(id)}, {$set: element});
+
+  await client.close();
 }
 
-function deleteUser(id) {
-  const index = users.findIndex(elem => id === elem.id);
-  users = [...users.slice(0, index), ...users.slice(index + 1)];
-}
+async function deleteElementInCollection(collectionName, id) {
+  const client = await MongoClient.connect(url, {useNewUrlParser: true});
 
-// -------- Boards --------
+  const db = client.db(databaseName);
+  const collection = db.collection(collectionName);
 
-function getBoards() {
-  return boards;
-}
+  await collection.remove({_id: ObjectId(id)});
 
-function getBoard(id) {
-  return boards.find(board => board.id === id);
-}
-
-function addBoard(board) {
-  boards.push(board);
-}
-
-function updateBoard(id, board) {
-  const index = boards.findIndex(elem => id === elem.id);
-  boards = [...boards.slice(0, index), board, ...boards.slice(index + 1)];
-}
-
-function deleteBoard(id) {
-  const index = boards.findIndex(elem => id === elem.id);
-  boards = [...boards.slice(0, index), ...boards.slice(index + 1)];
-}
-
-
-// -------- Lists --------
-
-function getLists() {
-  return lists;
-}
-
-function getList(id) {
-  return lists.find(list => list.id === id);
-}
-
-function addList(list) {
-  lists.push(list);
-}
-
-function updateList(id, list) {
-  const index = lists.findIndex(elem => id === elem.id);
-  lists = [...lists.slice(0, index), list, ...lists.slice(index + 1)];
-}
-
-function deleteList(id) {
-  const index = lists.findIndex(elem => id === elem.id);
-  lists = [...lists.slice(0, index), ...lists.slice(index + 1)];
-}
-
-// -------- Tasks --------
-
-function getTasks() {
-  return tasks;
-}
-
-function getTask(id) {
-  return tasks.find(task => task.id === id);
-}
-
-function addTask(task) {
-  tasks.push(task);
-}
-
-function updateTask(id, task) {
-  const index = tasks.findIndex(elem => id === elem.id);
-  tasks = [...tasks.slice(0, index), task, ...tasks.slice(index + 1)];
-}
-
-function deleteTask(id) {
-  const index = tasks.findIndex(elem => id === elem.id);
-  tasks = [...tasks.slice(0, index), ...tasks.slice(index + 1)];
-}
-
-function getTasksInList(id) {
-  return tasks.filter(task => task.order === id);
-}
-
-function getListsInBoard(id) {
-  return lists.filter(list => list.order === id);
+  await client.close();
 }
 
 module.exports = {
-  getUsers,
-  getUser,
-  addUser,
-  updateUser,
-  deleteUser,
-  getBoards,
-  getBoard,
-  addBoard,
-  updateBoard,
-  deleteBoard,
-  getLists,
-  getList,
-  addList,
-  updateList,
-  deleteList,
-  getTasks,
-  getTask,
-  addTask,
-  updateTask,
-  deleteTask,
-  getListsInBoard,
-  getTasksInList
-}
+  getAllElementsInColection,
+  getElementsInColectionById,
+  addElementInColection,
+  updateElementInCollection,
+  deleteElementInCollection
+};
