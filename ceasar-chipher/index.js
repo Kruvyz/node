@@ -11,28 +11,14 @@ const argv = require('minimist')(process.argv.slice(2), {
 
 const { action, shift, input, output } = argv;
 
-// if (!action || !shift) {
-//   console.error('action or shift is miss');
-//   return 0;
-// }
-
-let text = '';
-if (fs.existsSync(input)) {
-  text = fs.readFileSync(input, 'utf8');
-} else {
-  (async function(){
-    process.stdin.setEncoding('utf8');
-
-    text2 = await process.stdin.on('readable', () => {
-      let text1 = process.stdin.read();
-      process.stdout.write(`data: ${text1}`);
-    });
-
-   return text2
-  })().then(resolve => {console.log(resolve)});
+if (!action || !shift) {
+  console.error('action or shift is miss');
+  return 0;
 }
-// console.log(text);
-// outputText(text, output);
+
+let text =fs.readFileSync(input, 'utf8');
+
+outputText(text, output);
 
 function outputText(text, path) {
   if (fs.existsSync(path)) {
